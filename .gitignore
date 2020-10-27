@@ -1,0 +1,7 @@
+server/irc/config.js
+node_modules/
+test/ 
+package.json
+package-lock.json
+*.log
+log.*
