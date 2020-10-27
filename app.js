@@ -1,17 +1,12 @@
 /**
  * Required External Modules
  */
-const config = require('./server/irc/config.js');
 const express = require('express');
 const chalk = require('chalk');
 const morgan = require('morgan');
-const nunjucks = require('nunjucks');
 const bodyParser = require("body-parser");
 const path = require("path");
-// const notifier = require(`node-notifier`);
 const http = require(`http`);
-const Polyphony = require('polyphony.js');
-const polyphony = new Polyphony(config, 4207);
 
 /**
  * App Variables
@@ -66,7 +61,7 @@ app.use(express.static('browser/public'));
 app.use(bodyParser.json())
 
 app.listen(port, () => {
-    console.log(chalk.yellow(`App is listening at https://dashboard.polyphony.me/`));
+    console.log(chalk.yellow(`App is listening at https://dashboard.polyphony.me/tiltify`));
 });
 app.post("/hook", (req, res) => {
     console.log(req.body) // Call your action on the request here

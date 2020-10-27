@@ -5,8 +5,7 @@ const chalk = require(`chalk`);
 const mysql = require(`mysql`);
 const Tiltify = require(`tiltify`);
 let tiltifyOpts = {
-    access_token: `1b595d3293afb141968213dab8ce46b04d5460107af55edefdad0593061ef3ec`,
-    campaign_id: `76910`
+    access_token: config.tiltify.access_token
 }
 const tiltify = new Tiltify(tiltifyOpts.access_token);
 const db = mysql.createConnection({

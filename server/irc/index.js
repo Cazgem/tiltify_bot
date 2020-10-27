@@ -9,7 +9,6 @@ const irc = {
         client.connect();
         eventHandler.attachEvents(client);
         // eventListener.attachEvents(client);
-        // obsListener.attachEvents(client);
     }
 };
 
