@@ -4,11 +4,34 @@ const polyphony = new Polyphony(config, 3305);
 const chalk = require(`chalk`);
 const mysql = require(`mysql`);
 const Tiltify = require(`tiltify`);
+const {
+    createLogger,
+    transports,
+    format
+} = require('winston');
+const logger = createLogger({
+    level: 'info',
+    format: format.combine(
+        format.timestamp(),
+        format.align(),
+        format.printf(info => `${info.timestamp} ${info.level}: ${info.message}`)
+    ),
+    transports: [
+        new transports.File({
+            filename: './Tiltify.log',
+            level: 'info'
+        })
+    ]
+});
+async function log(level, input) {
+    logger.log(level, input);
+}
 let tiltifyOpts = {
     access_token: config.tiltify.access_token
 }
 const tiltify = new Tiltify(tiltifyOpts.access_token);
-const db = mysql.createConnection({
+const db = mysql.createPool({
+    connectionLimit: 10,
     host: config.mysql.host,
     user: config.mysql.user,
     password: config.mysql.password,
@@ -24,14 +47,24 @@ getCampaign = async function (channel_id) {
     });
     return output;
 }
+db.on('error', function (err) {
+    console.log(`${err.code}`); // 'ER_BAD_DB_ERROR'
+    log(`error`, `${err.code}`);
+});
+process.on('uncaughtException', function (err) {
+    // console.error(err);
+    log(`error`, 'uncaught exception: ' + err);
+    // console.log("Node NOT Exiting...");
+});
 module.exports = {
     attachEvents: function (client) {
-        polyphony.modules('all').then(data => {
+        polyphony.Twitch.modules('all').then(data => {
             data.forEach(chan => {
                 setTimeout(() => {
                     client.join(chan).then(() => { sleep(25); })
                         .catch((err) => {
                             // sleep(2000);
+
                         });
                 }, 1000)
             });
@@ -60,8 +93,10 @@ module.exports = {
                     if (params[1] === `campaign`) {
                         let sql = `UPDATE channels SET ${params[1]}="${params[2]}" WHERE channel_ID=?`;
                         let cazgemRewards = db.query(sql, [context[`room-id`]], (err, result) => {
-                            if (err) throw err;
-                            client.action(channel, `Cause Updated to ${params[2]}`)
+                            tiltify.Campaigns.fetch(params[2], function (err, campaign) {
+                                if (err) throw err;
+                                client.action(channel, `Cause Updated to ${params[2]}: ${campaign.name}`)
+                            })
                         });
                     } else {
                         client.action(channel, `You're alright!`)
@@ -72,6 +107,12 @@ module.exports = {
                         if (err) throw err;
                         client.action(channel, `Cause Updated to ${params[1]}`)
                     });
+                } else if (params[0] === `debug`) {
+                    getCampaign(context[`room-id`]).then(campaign_id => {
+                        tiltify.Campaigns.fetch(campaign_id, function (err, campaign) {
+                            client.action(channel, `Campaign ID: ${campaign_id} | Campaign Name: ${campaign.name}`)
+                        });
+                    })
                 } else {
                     client.action(channel, `I'm your personal Tiltify Assistant! Check out my documentation online.`)
                 }
